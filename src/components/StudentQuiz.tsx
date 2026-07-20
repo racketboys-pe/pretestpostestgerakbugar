@@ -13,7 +13,10 @@ import {
   BookOpen,
   Send,
   Sparkles,
-  ClipboardList
+  ClipboardList,
+  XCircle,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { Student, Submission, Question, AppTheme } from '../types';
 import { questions } from '../questions';
@@ -42,6 +45,7 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission, theme = 'mint'
   // Answers state
   const [answers, setAnswers] = useState<Record<number, 'A' | 'B' | 'C' | 'D'>>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [showDetailReview, setShowDetailReview] = useState(false);
   
   // Quiz status
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -148,7 +152,14 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission, theme = 'mint'
           totalQuestions: newSubmission.totalQuestions,
           score: newSubmission.score,
           ...Object.fromEntries(
-            questions.map(q => [`Q${q.id}`, newSubmission.answers[q.id] || ''])
+            questions.flatMap(q => {
+              const ans = newSubmission.answers[q.id] || '';
+              const isCorrect = ans === q.correctAnswer;
+              return [
+                [`Q${q.id}`, ans],
+                [`Q${q.id}_isCorrect`, isCorrect]
+              ];
+            })
           )
         };
 
@@ -179,6 +190,7 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission, theme = 'mint'
     setCurrentQuestionIndex(0);
     setStep('register');
     setLastSubmission(null);
+    setShowDetailReview(false);
   };
 
   const totalAnswered = Object.keys(answers).length;
@@ -722,6 +734,90 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission, theme = 'mint'
               ) : (
                 "Tetap semangat belajar! Silakan baca dan pelajari lagi materi atau panduan gerakan non-lokomotor dari media board game \"Gerak Bugarku\" agar gerakan tubuhmu makin tepat dan bugar."
               )}
+            </div>
+
+            {/* Detailed Answer Review Button & List */}
+            <div className="max-w-md mx-auto space-y-3">
+              <button
+                type="button"
+                id="btn-toggle-review-detail"
+                onClick={() => setShowDetailReview(!showDetailReview)}
+                className={`w-full flex items-center justify-between p-3.5 rounded-xl border ${
+                  cTheme.darkCanvas 
+                    ? 'bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-850' 
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                } font-bold text-xs transition-all`}
+              >
+                <span className="flex items-center gap-2">
+                  <ClipboardList className="w-4.5 h-4.5 text-indigo-500" />
+                  Tinjau Detail Hasil Tiap Soal
+                </span>
+                {showDetailReview ? (
+                  <ChevronUp className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showDetailReview && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="overflow-hidden"
+                  >
+                    <div className={`grid grid-cols-1 gap-2.5 max-h-[300px] overflow-y-auto pr-1 text-left ${
+                      cTheme.darkCanvas ? 'bg-slate-950 p-3 rounded-xl border border-slate-850' : 'bg-slate-50 p-3 rounded-xl border border-slate-150'
+                    }`}>
+                      {questions.map((q) => {
+                        const studentAns = lastSubmission.answers[q.id];
+                        const isCorrect = studentAns === q.correctAnswer;
+                        
+                        return (
+                          <div
+                            key={q.id}
+                            className={`p-3 rounded-lg border text-[11px] leading-relaxed flex flex-col gap-1.5 transition-all ${
+                              isCorrect
+                                ? cTheme.darkCanvas
+                                  ? 'bg-emerald-950/20 border-emerald-900/60 text-emerald-300'
+                                  : 'bg-emerald-50 border-emerald-200 text-slate-850'
+                                : cTheme.darkCanvas
+                                  ? 'bg-rose-950/20 border-rose-900/60 text-rose-300'
+                                  : 'bg-red-50 border-red-200 text-slate-850'
+                            }`}
+                          >
+                            <div className="flex items-start gap-1.5">
+                              {isCorrect ? (
+                                <CheckCircle className="w-3.5 h-3.5 shrink-0 text-emerald-500 mt-0.5" />
+                              ) : (
+                                <XCircle className="w-3.5 h-3.5 shrink-0 text-rose-500 mt-0.5" />
+                              )}
+                              <div>
+                                <span className="font-bold">Soal {q.id}:</span> {q.question}
+                              </div>
+                            </div>
+
+                            <div className={`flex items-center gap-4 text-[10px] font-bold pt-1.5 border-t ${
+                              isCorrect 
+                                ? cTheme.darkCanvas ? 'border-emerald-900/30' : 'border-emerald-100'
+                                : cTheme.darkCanvas ? 'border-rose-900/30' : 'border-red-100'
+                            }`}>
+                              <span>
+                                Jawaban Anda: <strong className={isCorrect ? 'text-emerald-600' : 'text-rose-600'}>{studentAns || 'Kosong'}</strong>
+                              </span>
+                              <span>
+                                Kunci: <strong className="text-indigo-600">{q.correctAnswer}</strong>
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Action options */}
