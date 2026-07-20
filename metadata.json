@@ -1,0 +1,6 @@
+{
+  "name": "Aplikasi Pretes Posttes Non-Lokomotor",
+  "description": "Aplikasi pengisian pre-tes dan post-tes instrumen pemahaman konsep gerak dasar non-lokomotor Kelas IV SD, terintegrasi dengan Google Sheets dan dilengkapi panel admin.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
