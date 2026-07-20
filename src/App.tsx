@@ -3,12 +3,14 @@ import {
   ClipboardList, 
   Settings, 
   Sparkles,
-  Layers
+  Layers,
+  Palette
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import StudentQuiz from './components/StudentQuiz';
 import AdminPanel from './components/AdminPanel';
-import { Submission, AdminSettings } from './types';
+import { Submission, AdminSettings, AppTheme } from './types';
+import { themeMap } from './lib/theme';
 
 export default function App() {
   // Navigation: 'student' | 'admin'
@@ -17,6 +19,9 @@ export default function App() {
   // Submissions State
   const [submissions, setSubmissions] = useState<Submission[]>([]);
 
+  // Theme State
+  const [theme, setTheme] = useState<AppTheme>('mint');
+
   // Admin Config State
   const [settings, setSettings] = useState<AdminSettings>({
     googleSheetUrl: '',
@@ -24,8 +29,13 @@ export default function App() {
     adminPass: 'admin123'
   });
 
-  // Load submissions and settings on mount
+  // Load submissions, settings, and theme on mount
   useEffect(() => {
+    const savedTheme = localStorage.getItem('pemahaman_konsep_theme') as AppTheme;
+    if (savedTheme && themeMap[savedTheme]) {
+      setTheme(savedTheme);
+    }
+
     const savedSubmissions = localStorage.getItem('pemahaman_konsep_submissions');
     if (savedSubmissions) {
       try {
@@ -137,61 +147,96 @@ export default function App() {
     localStorage.setItem('pemahaman_konsep_submissions', JSON.stringify(updated));
   };
 
+  const currentTheme = themeMap[theme];
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col selection:bg-teal-500 selection:text-white" id="main-app-container">
+    <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text} font-sans flex flex-col ${currentTheme.selection}`} id="main-app-container">
       {/* Upper Navigation Bar */}
-      <header className="bg-white border-b border-slate-150 sticky top-0 z-50 shadow-sm" id="main-header">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+      <header className={`${currentTheme.headerBg} border-b ${currentTheme.border} sticky top-0 z-50 shadow-sm transition-colors duration-300`} id="main-header">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Logo Brand */}
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setView('student')} id="brand-logo">
-            <div className="p-2 bg-gradient-to-tr from-teal-500 to-emerald-500 text-white rounded-xl shadow-md shadow-teal-500/10">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('student')} id="brand-logo">
+            <div className={`p-2 bg-gradient-to-tr ${currentTheme.gradientButton} text-white rounded-xl shadow-md`}>
               <Layers className="w-5 h-5" />
             </div>
-            <div>
-              <span className="font-black text-slate-900 tracking-tight text-sm md:text-base uppercase flex items-center gap-1.5">
+            <div className="hidden xs:block">
+              <span className={`font-black tracking-tight text-xs sm:text-sm md:text-base uppercase flex items-center gap-1.5 ${currentTheme.darkCanvas ? 'text-white' : 'text-slate-900'}`}>
                 KONSEPMOTORIC
-                <span className="text-[10px] font-bold bg-teal-100 text-teal-800 px-1.5 py-0.5 rounded-full lowercase">v1.0</span>
+                <span className={`text-[9px] font-bold ${currentTheme.darkCanvas ? 'bg-violet-900/50 text-violet-300' : 'bg-teal-100 text-teal-800'} px-1.5 py-0.5 rounded-full lowercase`}>v1.0</span>
               </span>
-              <p className="text-[10px] text-slate-400 font-bold -mt-0.5 uppercase tracking-wide hidden sm:block">Instrumen Tes Non-Lokomotor</p>
+              <p className="text-[9px] text-slate-400 font-bold -mt-0.5 uppercase tracking-wide hidden md:block">Instrumen Tes Non-Lokomotor</p>
             </div>
           </div>
 
+          {/* Theme Selector Dots */}
+          <div className="flex items-center gap-1 bg-slate-100/80 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50" id="theme-selector">
+            {[
+              { id: 'mint', color: 'bg-emerald-500', name: 'Emerald Mint' },
+              { id: 'ocean', color: 'bg-blue-500', name: 'Ocean Wave' },
+              { id: 'sunset', color: 'bg-orange-500', name: 'Sunset Glow' },
+              { id: 'cosmic', color: 'bg-[#1e1b4b] border border-violet-400', name: 'Cosmic Dark' },
+              { id: 'lavender', color: 'bg-purple-500', name: 'Lavender Garden' }
+            ].map(t => (
+              <button
+                key={t.id}
+                title={t.name}
+                onClick={() => {
+                  setTheme(t.id as AppTheme);
+                  localStorage.setItem('pemahaman_konsep_theme', t.id);
+                }}
+                className={`w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full ${t.color} transition-all duration-200 relative flex items-center justify-center ${theme === t.id ? 'scale-110 ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-slate-900' : 'hover:scale-105 opacity-80 hover:opacity-100'}`}
+              >
+                {theme === t.id && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
+                )}
+              </button>
+            ))}
+          </div>
+
           {/* Navigation Controls */}
-          <nav className="flex items-center gap-2" id="header-nav-tabs">
+          <nav className="flex items-center gap-1.5 sm:gap-2" id="header-nav-tabs">
             {/* Student Mode Button */}
             <button
               onClick={() => setView('student')}
               id="btn-nav-student"
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all ${
                 view === 'student'
-                  ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-400/20'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? currentTheme.navStudentActive
+                  : currentTheme.darkCanvas 
+                    ? 'text-slate-300 hover:bg-slate-800/50' 
+                    : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
-              <ClipboardList className="w-4 h-4" />
-              Mulai Tes Siswa
+              <ClipboardList className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Mulai Tes Siswa</span>
+              <span className="xs:hidden">Siswa</span>
             </button>
 
             {/* Admin Panel Button */}
             <button
               onClick={() => setView('admin')}
               id="btn-nav-admin"
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all ${
                 view === 'admin'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? currentTheme.darkCanvas
+                    ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/20'
+                    : 'bg-slate-900 text-white'
+                  : currentTheme.darkCanvas 
+                    ? 'text-slate-300 hover:bg-slate-800/50' 
+                    : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
-              <Settings className="w-4 h-4" />
-              Panel Guru / Admin
+              <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Panel Guru</span>
+              <span className="xs:hidden">Guru</span>
             </button>
           </nav>
         </div>
       </header>
 
       {/* Main Content Render Area */}
-      <main className="flex-grow py-8" id="main-content-area">
+      <main className="flex-grow py-6 sm:py-8" id="main-content-area">
         <AnimatePresence mode="wait">
           {view === 'student' ? (
             <motion.div
@@ -204,6 +249,7 @@ export default function App() {
               <StudentQuiz 
                 webAppUrl={settings.googleSheetUrl} 
                 onNewSubmission={handleNewSubmission} 
+                theme={theme}
               />
             </motion.div>
           ) : (
@@ -220,6 +266,7 @@ export default function App() {
                 onSaveSettings={handleSaveSettings}
                 onClearSubmissions={handleClearSubmissions}
                 onDeleteSubmission={handleDeleteSubmission}
+                theme={theme}
               />
             </motion.div>
           )}
@@ -227,13 +274,13 @@ export default function App() {
       </main>
 
       {/* Aesthetic and Informative Footer */}
-      <footer className="bg-white border-t border-slate-150 py-6" id="main-footer">
+      <footer className={`${currentTheme.headerBg} border-t ${currentTheme.border} py-6 transition-colors duration-300`} id="main-footer">
         <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-bold text-slate-400">
           <div className="flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-teal-500" />
+            <Sparkles className={`w-4 h-4 ${currentTheme.darkCanvas ? 'text-violet-400' : 'text-teal-500'}`} />
             <span>Media Board Game "Gerak Bugarku" — Kelas IV SD</span>
           </div>
-          <p className="font-normal text-slate-400">
+          <p className="font-normal text-slate-400 text-center md:text-right">
             &copy; Gurumaskini 2026. Aplikasi Instrumen Pemahaman Konsep Gerak Dasar Non-Lokomotor.
           </p>
         </div>

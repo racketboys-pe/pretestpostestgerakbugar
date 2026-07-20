@@ -32,3 +32,6 @@ export interface AdminSettings {
   adminId: string;
   adminPass: string;
 }
+
+export type AppTheme = 'mint' | 'ocean' | 'sunset' | 'cosmic' | 'lavender';
+

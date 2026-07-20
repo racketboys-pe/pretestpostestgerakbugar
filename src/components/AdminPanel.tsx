@@ -22,7 +22,7 @@ import {
   LogOut,
   HelpCircle
 } from 'lucide-react';
-import { Submission, AdminSettings } from '../types';
+import { Submission, AdminSettings, AppTheme } from '../types';
 import { questions } from '../questions';
 
 interface AdminPanelProps {
@@ -31,6 +31,7 @@ interface AdminPanelProps {
   onSaveSettings: (newSettings: AdminSettings) => void;
   onClearSubmissions: () => void;
   onDeleteSubmission: (id: string) => void;
+  theme: AppTheme;
 }
 
 export default function AdminPanel({
@@ -38,7 +39,8 @@ export default function AdminPanel({
   submissions,
   onSaveSettings,
   onClearSubmissions,
-  onDeleteSubmission
+  onDeleteSubmission,
+  theme
 }: AdminPanelProps) {
   // Login State
   const [isLoggedIn, setIsLoggedIn] = useState(false);

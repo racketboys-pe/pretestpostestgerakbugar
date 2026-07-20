@@ -15,15 +15,19 @@ import {
   Sparkles,
   ClipboardList
 } from 'lucide-react';
-import { Student, Submission, Question } from '../types';
+import { Student, Submission, Question, AppTheme } from '../types';
 import { questions } from '../questions';
+import { themeMap } from '../lib/theme';
 
 interface StudentQuizProps {
   webAppUrl: string;
   onNewSubmission: (submission: Submission) => void;
+  theme?: AppTheme;
 }
 
-export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizProps) {
+export default function StudentQuiz({ webAppUrl, onNewSubmission, theme = 'mint' }: StudentQuizProps) {
+  const cTheme = themeMap[theme];
+
   // Navigation states: 'register' | 'quiz' | 'review' | 'success'
   const [step, setStep] = useState<'register' | 'quiz' | 'review' | 'success'>('register');
   
@@ -193,23 +197,23 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.3 }}
-            className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden"
+            className={`${cTheme.cardBg} rounded-2xl shadow-xl border ${cTheme.border} overflow-hidden`}
           >
             {/* Header Banner */}
-            <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 p-8 text-white text-center relative overflow-hidden">
+            <div className={`bg-gradient-to-r ${cTheme.gradientHeader} p-8 text-white text-center relative overflow-hidden`}>
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-              <div className="absolute bottom-0 left-0 w-40 h-40 bg-teal-500/20 rounded-full blur-3xl -ml-16 -mb-16"></div>
+              <div className="absolute bottom-0 left-0 w-40 h-40 bg-teal-500/10 rounded-full blur-3xl -ml-16 -mb-16"></div>
               
               <div className="inline-flex p-3 bg-white/10 backdrop-blur-md rounded-xl mb-4 border border-white/20 shadow-inner">
                 <ClipboardList className="w-8 h-8 text-white animate-pulse" />
               </div>
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight" id="main-quiz-title">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight animate-fade-in" id="main-quiz-title">
                 INSTRUMEN TES PEMAHAMAN KONSEP
               </h1>
-              <p className="text-teal-50 font-medium mt-1 text-sm md:text-base">
+              <p className="opacity-90 font-medium mt-1 text-sm md:text-base">
                 Gerak Dasar Non-Lokomotor (Pretest / Posttest)
               </p>
-              <div className="mt-4 inline-flex items-center gap-2 bg-emerald-700/50 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-semibold border border-emerald-500/30">
+              <div className={`mt-4 inline-flex items-center gap-2 ${cTheme.badgeBg} backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-semibold border border-white/10`}>
                 <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
                 Media Board Game "Gerak Bugarku" — Kelas IV SD
               </div>
@@ -217,12 +221,12 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
 
             {/* Registration Form */}
             <form onSubmit={handleStartQuiz} className="p-8 space-y-6">
-              <div className="border-b border-slate-100 pb-4">
-                <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  <User className="w-5 h-5 text-teal-600" />
+              <div className={`border-b ${cTheme.border} pb-4`}>
+                <h2 className={`text-lg font-bold ${cTheme.darkCanvas ? 'text-white' : 'text-slate-800'} flex items-center gap-2`}>
+                  <User className={`w-5 h-5 ${cTheme.textPrimary}`} />
                   Identitas Peserta Didik
                 </h2>
-                <p className="text-slate-500 text-xs mt-1">
+                <p className={`${cTheme.textMuted} text-xs mt-1`}>
                   Silakan masukkan data diri dengan benar sebelum memulai pengerjaan tes.
                 </p>
               </div>
@@ -237,7 +241,7 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Nama */}
                 <div className="space-y-2">
-                  <label htmlFor="nama-input" className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <label htmlFor="nama-input" className={`block text-xs font-bold uppercase tracking-wider ${cTheme.textMuted}`}>
                     Nama Lengkap
                   </label>
                   <div className="relative">
@@ -251,14 +255,14 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                       placeholder="Contoh: Muhammad Rafif"
                       value={student.nama}
                       onChange={e => setStudent(prev => ({ ...prev, nama: e.target.value }))}
-                      className="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:bg-white text-slate-800 transition-colors text-sm font-medium"
+                      className={`block w-full pl-11 pr-4 py-3 ${cTheme.inputBg} border ${cTheme.darkCanvas ? 'border-slate-800' : 'border-slate-200'} rounded-xl focus:outline-none focus:ring-2 ${cTheme.ringFocus} ${cTheme.borderFocus} ${cTheme.darkCanvas ? 'focus:bg-slate-900' : 'focus:bg-white'} ${cTheme.inputText} transition-colors text-sm font-medium`}
                     />
                   </div>
                 </div>
 
                 {/* Sekolah */}
                 <div className="space-y-2">
-                  <label htmlFor="sekolah-input" className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <label htmlFor="sekolah-input" className={`block text-xs font-bold uppercase tracking-wider ${cTheme.textMuted}`}>
                     Sekolah
                   </label>
                   <div className="relative">
@@ -272,14 +276,14 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                       placeholder="Contoh: SDN 1 Merdeka"
                       value={student.sekolah}
                       onChange={e => setStudent(prev => ({ ...prev, sekolah: e.target.value }))}
-                      className="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:bg-white text-slate-800 transition-colors text-sm font-medium"
+                      className={`block w-full pl-11 pr-4 py-3 ${cTheme.inputBg} border ${cTheme.darkCanvas ? 'border-slate-800' : 'border-slate-200'} rounded-xl focus:outline-none focus:ring-2 ${cTheme.ringFocus} ${cTheme.borderFocus} ${cTheme.darkCanvas ? 'focus:bg-slate-900' : 'focus:bg-white'} ${cTheme.inputText} transition-colors text-sm font-medium`}
                     />
                   </div>
                 </div>
 
                 {/* Kelas Select */}
                 <div className="space-y-2">
-                  <label htmlFor="kelas-select" className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <label htmlFor="kelas-select" className={`block text-xs font-bold uppercase tracking-wider ${cTheme.textMuted}`}>
                     Kelas
                   </label>
                   <div className="relative">
@@ -290,20 +294,20 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                       id="kelas-select"
                       value={student.kelas}
                       onChange={e => setStudent(prev => ({ ...prev, kelas: e.target.value }))}
-                      className="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:bg-white text-slate-800 transition-colors text-sm font-medium appearance-none"
+                      className={`block w-full pl-11 pr-4 py-3 ${cTheme.inputBg} border ${cTheme.darkCanvas ? 'border-slate-800' : 'border-slate-200'} rounded-xl focus:outline-none focus:ring-2 ${cTheme.ringFocus} ${cTheme.borderFocus} ${cTheme.darkCanvas ? 'focus:bg-slate-900' : 'focus:bg-white'} ${cTheme.inputText} transition-colors text-sm font-medium appearance-none`}
                     >
-                      <option value="Kelas IV A">Kelas IV A</option>
-                      <option value="Kelas IV B">Kelas IV B</option>
-                      <option value="Kelas IV C">Kelas IV C</option>
-                      <option value="Kelas IV D">Kelas IV D</option>
-                      <option value="Lainnya">Lainnya / Modifikasi</option>
+                      <option value="Kelas IV A" className={cTheme.darkCanvas ? 'bg-slate-900 text-white' : ''}>Kelas IV A</option>
+                      <option value="Kelas IV B" className={cTheme.darkCanvas ? 'bg-slate-900 text-white' : ''}>Kelas IV B</option>
+                      <option value="Kelas IV C" className={cTheme.darkCanvas ? 'bg-slate-900 text-white' : ''}>Kelas IV C</option>
+                      <option value="Kelas IV D" className={cTheme.darkCanvas ? 'bg-slate-900 text-white' : ''}>Kelas IV D</option>
+                      <option value="Lainnya" className={cTheme.darkCanvas ? 'bg-slate-900 text-white' : ''}>Lainnya / Modifikasi</option>
                     </select>
                   </div>
                 </div>
 
                 {/* Tipe Tes (Pretest / Posttest) */}
                 <div className="space-y-2">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <label className={`block text-xs font-bold uppercase tracking-wider ${cTheme.textMuted}`}>
                     Jenis Instrumen Tes
                   </label>
                   <div className="grid grid-cols-2 gap-3" id="test-type-selection">
@@ -313,8 +317,10 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                       onClick={() => setTipeTes('Pretest')}
                       className={`py-3 px-4 rounded-xl font-bold text-sm transition-all border flex items-center justify-center gap-2 ${
                         tipeTes === 'Pretest'
-                          ? 'bg-amber-50 text-amber-700 border-amber-300 ring-2 ring-amber-400/20'
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          ? cTheme.darkCanvas
+                            ? 'bg-amber-950/40 text-amber-300 border-amber-800 ring-2 ring-amber-500/20'
+                            : 'bg-amber-50 text-amber-700 border-amber-300 ring-2 ring-amber-400/20'
+                          : `${cTheme.inputBg} ${cTheme.darkCanvas ? 'text-slate-400 border-slate-800' : 'text-slate-600 border-slate-200'} hover:bg-opacity-80`
                       }`}
                     >
                       <BookOpen className="w-4 h-4 shrink-0" />
@@ -326,8 +332,10 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                       onClick={() => setTipeTes('Posttest')}
                       className={`py-3 px-4 rounded-xl font-bold text-sm transition-all border flex items-center justify-center gap-2 ${
                         tipeTes === 'Posttest'
-                          ? 'bg-indigo-50 text-indigo-700 border-indigo-300 ring-2 ring-indigo-400/20'
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          ? cTheme.darkCanvas
+                            ? 'bg-indigo-950/40 text-indigo-300 border-indigo-800 ring-2 ring-indigo-500/20'
+                            : 'bg-indigo-50 text-indigo-700 border-indigo-300 ring-2 ring-indigo-400/20'
+                          : `${cTheme.inputBg} ${cTheme.darkCanvas ? 'text-slate-400 border-slate-800' : 'text-slate-600 border-slate-200'} hover:bg-opacity-80`
                       }`}
                     >
                       <CheckCircle className="w-4 h-4 shrink-0" />
@@ -338,12 +346,12 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
               </div>
 
               {/* Instructions and Rules */}
-              <div className="bg-slate-50 border border-slate-150 rounded-2xl p-5 space-y-3">
-                <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
+              <div className={`${cTheme.inputBg} border ${cTheme.border} rounded-2xl p-5 space-y-3`}>
+                <h3 className={`font-bold ${cTheme.darkCanvas ? 'text-slate-200' : 'text-slate-700'} text-sm flex items-center gap-2`}>
                   <HelpCircle className="w-4 h-4 text-slate-500" />
                   Petunjuk Pengerjaan Soal:
                 </h3>
-                <ul className="text-xs text-slate-600 space-y-1.5 pl-6 list-decimal leading-relaxed">
+                <ul className={`text-xs ${cTheme.darkCanvas ? 'text-slate-300' : 'text-slate-600'} space-y-1.5 pl-6 list-decimal leading-relaxed`}>
                   <li>Bacalah tiap soal dengan teliti dan konsentrasi tinggi.</li>
                   <li>Pilih satu jawaban yang paling tepat (A, B, C, atau D) di setiap soal.</li>
                   <li>Kerjakan secara mandiri dan jujur tanpa bantuan orang lain.</li>
@@ -357,7 +365,7 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                 <button
                   type="submit"
                   id="btn-start-quiz"
-                  className="w-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-extrabold py-4 px-6 rounded-xl shadow-lg shadow-teal-600/25 transition-all duration-200 flex items-center justify-center gap-2 group transform active:scale-[0.98]"
+                  className={`w-full bg-gradient-to-r ${cTheme.gradientButton} text-white font-extrabold py-4 px-6 rounded-xl shadow-lg shadow-indigo-600/10 transition-all duration-200 flex items-center justify-center gap-2 group transform active:scale-[0.98]`}
                 >
                   Mulai Pengerjaan Tes Sekarang
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -378,7 +386,7 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
             className="space-y-6"
           >
             {/* Quick Header */}
-            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className={`${cTheme.cardBg} rounded-xl border ${cTheme.border} shadow-sm p-4 flex flex-col sm:flex-row items-center justify-between gap-4`}>
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg text-xs font-bold ${
                   tipeTes === 'Pretest' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'
@@ -386,43 +394,43 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                   {tipeTes === 'Pretest' ? 'PRETEST' : 'POSTTEST'}
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-800 text-sm">{student.nama}</h4>
-                  <p className="text-xs text-slate-500">{student.kelas} • {student.sekolah}</p>
+                  <h4 className={`font-bold ${cTheme.darkCanvas ? 'text-white' : 'text-slate-800'} text-sm`}>{student.nama}</h4>
+                  <p className={`text-xs ${cTheme.textMuted}`}>{student.kelas} • {student.sekolah}</p>
                 </div>
               </div>
               
               {/* Progress Text */}
               <div className="text-right">
-                <div className="text-xs font-semibold text-slate-400">Kemajuan Tes</div>
-                <div className="text-sm font-black text-slate-700">
+                <div className={`text-xs font-semibold ${cTheme.textMuted}`}>Kemajuan Tes</div>
+                <div className={`text-sm font-black ${cTheme.darkCanvas ? 'text-slate-200' : 'text-slate-700'}`}>
                   {totalAnswered} / {questions.length} Terjawab
                 </div>
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden shadow-inner">
+            <div className={`w-full ${cTheme.darkCanvas ? 'bg-slate-800' : 'bg-slate-100'} rounded-full h-2.5 overflow-hidden shadow-inner`}>
               <div 
-                className="bg-gradient-to-r from-teal-500 to-emerald-500 h-2.5 rounded-full transition-all duration-300"
+                className={`bg-gradient-to-r ${cTheme.gradientButton} h-2.5 rounded-full transition-all duration-300`}
                 style={{ width: `${progressPercent}%` }}
               ></div>
             </div>
 
             {/* Question Card */}
-            <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden" id={`question-card-${currentQuestion.id}`}>
+            <div className={`${cTheme.cardBg} rounded-2xl shadow-md border ${cTheme.border} overflow-hidden`} id={`question-card-${currentQuestion.id}`}>
               {/* Question Index Badge */}
-              <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <span className="text-sm font-extrabold text-teal-700">
+              <div className={`${cTheme.darkCanvas ? 'bg-slate-800/50' : 'bg-slate-50'} px-6 py-4 border-b ${cTheme.border} flex items-center justify-between`}>
+                <span className={`text-sm font-extrabold ${cTheme.textAccent}`}>
                   PERTANYAAN {currentQuestion.id} dari {questions.length}
                 </span>
-                <span className="text-xs bg-teal-50 text-teal-700 font-semibold px-2.5 py-1 rounded-full border border-teal-100">
+                <span className={`text-xs ${cTheme.bgAccent} ${cTheme.textAccent} font-semibold px-2.5 py-1 rounded-full border ${cTheme.borderAccent}`}>
                   Gerak Non-Lokomotor
                 </span>
               </div>
 
               {/* Question Text */}
               <div className="p-6 md:p-8 space-y-6">
-                <h3 className="text-lg font-bold text-slate-800 leading-relaxed md:text-xl">
+                <h3 className={`text-lg font-bold ${cTheme.darkCanvas ? 'text-white' : 'text-slate-800'} leading-relaxed md:text-xl`}>
                   {currentQuestion.question}
                 </h3>
 
@@ -437,23 +445,21 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                         type="button"
                         onClick={() => handleSelectOption(currentQuestion.id, opt.key)}
                         className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-start gap-4 group ${
-                          isSelected
-                            ? 'border-teal-500 bg-teal-50/50 shadow-sm ring-1 ring-teal-400/20'
-                            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 bg-white'
+                          isSelected ? cTheme.optionActive : cTheme.optionInactive
                         }`}
                       >
                         {/* Option Circle key */}
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 transition-colors ${
-                          isSelected
-                            ? 'bg-teal-600 text-white'
-                            : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
+                          isSelected ? cTheme.optionCircleActive : cTheme.optionCircleInactive
                         }`}>
                           {opt.key}
                         </div>
                         
                         {/* Option text */}
                         <span className={`text-sm md:text-base font-semibold pt-0.5 leading-relaxed ${
-                          isSelected ? 'text-teal-900' : 'text-slate-700'
+                          isSelected 
+                            ? cTheme.darkCanvas ? 'text-white' : cTheme.textAccent 
+                            : cTheme.darkCanvas ? 'text-slate-300' : 'text-slate-700'
                         }`}>
                           {opt.text}
                         </span>
@@ -471,7 +477,7 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                 id="btn-prev-question"
                 onClick={prevQuestion}
                 disabled={currentQuestionIndex === 0}
-                className="px-5 py-3 border border-slate-200 bg-white text-slate-600 font-bold rounded-xl transition-all hover:bg-slate-50 active:scale-95 flex items-center gap-2 disabled:opacity-40 disabled:pointer-events-none"
+                className={`px-5 py-3 border ${cTheme.darkCanvas ? 'border-slate-800 text-slate-300 bg-slate-900 hover:bg-slate-800/60' : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'} font-bold rounded-xl transition-all active:scale-95 flex items-center gap-2 disabled:opacity-40 disabled:pointer-events-none`}
               >
                 <ArrowLeft className="w-5 h-5" />
                 Sebelumnya
@@ -481,7 +487,7 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                 type="button"
                 id="btn-next-question"
                 onClick={nextQuestion}
-                className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-extrabold rounded-xl shadow-md shadow-teal-600/10 transition-all active:scale-95 flex items-center gap-2"
+                className={`px-6 py-3 ${cTheme.bgPrimary} ${cTheme.bgPrimaryHover} text-white font-extrabold rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-2`}
               >
                 {currentQuestionIndex === questions.length - 1 ? 'Tinjau Jawaban' : 'Berikutnya'}
                 <ArrowRight className="w-5 h-5" />
@@ -489,8 +495,8 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
             </div>
 
             {/* Question Navigator Grid */}
-            <div className="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-3">
-              <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <div className={`${cTheme.cardBg} rounded-xl border ${cTheme.border} p-5 shadow-sm space-y-3`}>
+              <h5 className={`text-xs font-bold ${cTheme.textMuted} uppercase tracking-wider`}>
                 Navigasi Soal
               </h5>
               <div className="flex flex-wrap gap-2" id="navigation-question-grid">
@@ -505,10 +511,10 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                       onClick={() => setCurrentQuestionIndex(idx)}
                       className={`w-9 h-9 rounded-lg font-bold text-xs flex items-center justify-center border transition-all ${
                         isCurrent
-                          ? 'border-teal-500 bg-teal-600 text-white ring-2 ring-teal-500/20'
+                          ? `border-${theme === 'cosmic' ? 'violet' : 'teal'}-500 ${cTheme.bgPrimary} text-white ring-2 ring-${theme === 'cosmic' ? 'violet' : 'teal'}-500/20`
                           : isAnswered
-                          ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                          : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100'
+                          ? cTheme.darkCanvas ? 'border-emerald-800 bg-emerald-950/40 text-emerald-300' : 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                          : cTheme.darkCanvas ? 'border-slate-800 bg-slate-800 text-slate-400 hover:bg-slate-750' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100'
                       }`}
                     >
                       {q.id}
@@ -528,14 +534,14 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.3 }}
-            className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 md:p-8 space-y-6"
+            className={`${cTheme.cardBg} rounded-2xl shadow-xl border ${cTheme.border} p-6 md:p-8 space-y-6`}
           >
             <div className="text-center space-y-2">
-              <div className="inline-flex p-3 bg-teal-50 rounded-full text-teal-600 border border-teal-100">
+              <div className={`inline-flex p-3 ${cTheme.bgAccent} rounded-full ${cTheme.textAccent} border ${cTheme.borderAccent}`}>
                 <CheckCircle className="w-8 h-8" />
               </div>
-              <h2 className="text-2xl font-black text-slate-800">Tinjau Jawabanmu</h2>
-              <p className="text-slate-500 text-sm max-w-lg mx-auto">
+              <h2 className={`text-2xl font-black ${cTheme.darkCanvas ? 'text-white' : 'text-slate-800'}`}>Tinjau Jawabanmu</h2>
+              <p className={`${cTheme.textMuted} text-sm max-w-lg mx-auto`}>
                 Pastikan seluruh pertanyaan telah dijawab dengan teliti sebelum mengirimkan jawaban akhir ke guru.
               </p>
             </div>
@@ -560,7 +566,7 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
             </div>
 
             {/* Table or list grid of all questions showing selected choice */}
-            <div className="border border-slate-100 rounded-xl overflow-hidden shadow-inner bg-slate-50">
+            <div className={`border ${cTheme.border} rounded-xl overflow-hidden shadow-inner ${cTheme.darkCanvas ? 'bg-slate-950' : 'bg-slate-50'}`}>
               <div className="max-h-72 overflow-y-auto p-4 space-y-2">
                 {questions.map((q) => {
                   const answeredKey = answers[q.id];
@@ -568,19 +574,19 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                   return (
                     <div 
                       key={q.id}
-                      className="bg-white p-3.5 rounded-lg border border-slate-150 flex items-center justify-between text-sm transition-colors hover:border-slate-300"
+                      className={`${cTheme.cardBg} p-3.5 rounded-lg border ${cTheme.darkCanvas ? 'border-slate-800 hover:border-slate-700' : 'border-slate-150 hover:border-slate-300'} flex items-center justify-between text-sm transition-colors`}
                     >
                       <div className="flex items-center gap-3">
-                        <span className="w-7 h-7 rounded bg-slate-100 text-slate-500 font-extrabold flex items-center justify-center shrink-0 text-xs">
+                        <span className={`w-7 h-7 rounded ${cTheme.darkCanvas ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'} font-extrabold flex items-center justify-center shrink-0 text-xs`}>
                           {q.id}
                         </span>
-                        <p className="font-bold text-slate-700 truncate max-w-xs md:max-w-md">
+                        <p className={`font-bold ${cTheme.darkCanvas ? 'text-slate-300' : 'text-slate-700'} truncate max-w-xs md:max-w-md`}>
                           {q.question}
                         </p>
                       </div>
                       
                       {hasAnswered ? (
-                        <span className="px-3 py-1 bg-teal-50 border border-teal-100 text-teal-800 rounded-lg font-black text-xs flex items-center gap-1.5">
+                        <span className={`px-3 py-1 ${cTheme.bgAccent} border ${cTheme.borderAccent} ${cTheme.textAccent} rounded-lg font-black text-xs flex items-center gap-1.5`}>
                           Pilihan {answeredKey}
                         </span>
                       ) : (
@@ -610,7 +616,7 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                   setStep('quiz');
                   setCurrentQuestionIndex(questions.length - 1);
                 }}
-                className="w-full sm:w-1/2 px-5 py-3.5 border border-slate-200 bg-white text-slate-600 font-bold rounded-xl transition-all hover:bg-slate-50 flex items-center justify-center gap-2"
+                className={`w-full sm:w-1/2 px-5 py-3.5 border ${cTheme.darkCanvas ? 'border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-850' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'} font-bold rounded-xl transition-all flex items-center justify-center gap-2`}
               >
                 <ArrowLeft className="w-5 h-5" />
                 Kembali ke Soal
@@ -621,7 +627,7 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                 id="btn-final-submit"
                 onClick={handleSubmitQuiz}
                 disabled={isSubmitting}
-                className="w-full sm:w-1/2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-extrabold py-3.5 px-6 rounded-xl shadow-lg shadow-teal-600/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+                className={`w-full sm:w-1/2 bg-gradient-to-r ${cTheme.gradientButton} text-white font-extrabold py-3.5 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
               >
                 {isSubmitting ? (
                   <>
@@ -650,7 +656,7 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3 }}
-            className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 space-y-6 text-center"
+            className={`${cTheme.cardBg} rounded-2xl shadow-xl border ${cTheme.border} p-8 space-y-6 text-center`}
           >
             {/* Celebration Icon */}
             <div className="relative inline-flex mb-2">
@@ -661,35 +667,35 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-3xl font-black text-slate-800">Selamat! Tes Selesai</h1>
-              <p className="text-slate-500 text-sm max-w-md mx-auto">
+              <h1 className={`text-3xl font-black ${cTheme.darkCanvas ? 'text-white' : 'text-slate-800'}`}>Selamat! Tes Selesai</h1>
+              <p className={`${cTheme.textMuted} text-sm max-w-md mx-auto`}>
                 Jawabanmu telah berhasil dikirim dan tersimpan dengan aman ke database nilai guru.
               </p>
             </div>
 
             {/* Submission card details */}
-            <div className="max-w-md mx-auto bg-slate-50 rounded-2xl p-6 border border-slate-150 space-y-4">
-              <h3 className="font-extrabold text-slate-700 border-b border-slate-200 pb-2.5 text-sm flex items-center justify-center gap-1.5">
-                <ClipboardList className="w-4 h-4 text-slate-400" />
+            <div className={`max-w-md mx-auto ${cTheme.darkCanvas ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-150'} rounded-2xl p-6 border space-y-4`}>
+              <h3 className={`font-extrabold ${cTheme.darkCanvas ? 'text-slate-200 border-slate-800' : 'text-slate-700 border-slate-200'} border-b pb-2.5 text-sm flex items-center justify-center gap-1.5`}>
+                <ClipboardList className={`w-4 h-4 ${cTheme.textMuted}`} />
                 Hasil Pengerjaan {lastSubmission.tipeTes === 'Pretest' ? 'Pre-tes' : 'Post-tes'}
               </h3>
               
-              <div className="grid grid-cols-2 gap-y-3.5 gap-x-2 text-xs font-semibold text-slate-500 text-left">
+              <div className={`grid grid-cols-2 gap-y-3.5 gap-x-2 text-xs font-semibold ${cTheme.textMuted} text-left`}>
                 <div>Nama:</div>
-                <div className="text-right text-slate-800 truncate font-bold">{lastSubmission.nama}</div>
+                <div className={`text-right ${cTheme.darkCanvas ? 'text-slate-200' : 'text-slate-800'} truncate font-bold`}>{lastSubmission.nama}</div>
                 
                 <div>Sekolah:</div>
-                <div className="text-right text-slate-800 truncate font-bold">{lastSubmission.sekolah}</div>
+                <div className={`text-right ${cTheme.darkCanvas ? 'text-slate-200' : 'text-slate-800'} truncate font-bold`}>{lastSubmission.sekolah}</div>
                 
                 <div>Kelas:</div>
-                <div className="text-right text-slate-800 font-bold">{lastSubmission.kelas}</div>
+                <div className={`text-right ${cTheme.darkCanvas ? 'text-slate-200' : 'text-slate-800'} font-bold`}>{lastSubmission.kelas}</div>
                 
                 <div>Tanggal Submit:</div>
-                <div className="text-right text-slate-800 font-bold">{lastSubmission.timestamp}</div>
+                <div className={`text-right ${cTheme.darkCanvas ? 'text-slate-200' : 'text-slate-800'} font-bold`}>{lastSubmission.timestamp}</div>
               </div>
 
               {/* Score Showcase */}
-              <div className="mt-4 pt-4 border-t border-slate-200 grid grid-cols-2 gap-4">
+              <div className={`mt-4 pt-4 border-t ${cTheme.darkCanvas ? 'border-slate-800' : 'border-slate-200'} grid grid-cols-2 gap-4`}>
                 <div className="bg-emerald-50/60 p-3 rounded-xl border border-emerald-100 text-center">
                   <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Benar</div>
                   <div className="text-xl font-black text-emerald-700 mt-1">
@@ -707,8 +713,8 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
             </div>
 
             {/* Quick Feedback Card based on Score */}
-            <div className="max-w-md mx-auto bg-teal-50/40 p-4 border border-teal-100 rounded-xl text-left text-xs text-teal-800 leading-relaxed">
-              <p className="font-bold text-teal-900 mb-1">Catatan Pemahaman Konsep:</p>
+            <div className={`max-w-md mx-auto ${cTheme.bgAccent}/40 p-4 border ${cTheme.borderAccent} rounded-xl text-left text-xs ${cTheme.textAccent} leading-relaxed`}>
+              <p className={`font-bold ${cTheme.darkCanvas ? 'text-violet-300' : 'text-teal-900'} mb-1`}>Catatan Pemahaman Konsep:</p>
               {lastSubmission.score >= 80 ? (
                 "Luar biasa! Pemahamanmu mengenai gerak dasar non-lokomotor (Keseimbangan, Membungkuk, Memutar, Mendorong/Menarik, Mengayun, dan Berayun) sudah sangat matang dan siap menjadi teladan bagi teman yang lain."
               ) : lastSubmission.score >= 60 ? (
@@ -724,9 +730,9 @@ export default function StudentQuiz({ webAppUrl, onNewSubmission }: StudentQuizP
                 type="button"
                 id="btn-retry-quiz"
                 onClick={handleResetQuiz}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3.5 px-6 rounded-xl border border-slate-250 transition-all flex items-center justify-center gap-2"
+                className={`w-full ${cTheme.darkCanvas ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-250'} font-extrabold py-3.5 px-6 rounded-xl border transition-all flex items-center justify-center gap-2`}
               >
-                <RotateCcw className="w-5 h-5 text-slate-500" />
+                <RotateCcw className={`w-5 h-5 ${cTheme.textMuted}`} />
                 Mulai Tes Baru / Ganti Pengguna
               </button>
             </div>
