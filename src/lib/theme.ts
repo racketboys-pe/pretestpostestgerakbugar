@@ -22,6 +22,11 @@ export interface ThemeClasses {
   optionInactive: string;    // option button when inactive
   optionCircleActive: string;// option letter badge when active
   optionCircleInactive: string;// option letter badge when inactive
+  bg: string;                // body/app background class
+  text: string;              // default text color class
+  selection: string;         // text selection highlight colors
+  headerBg: string;          // opaque background class for header (e.g. bg-white or bg-slate-900)
+  navStudentActive: string;  // active state class for student nav button
 }
 
 export const themeMap: Record<AppTheme, ThemeClasses> = {
@@ -46,7 +51,12 @@ export const themeMap: Record<AppTheme, ThemeClasses> = {
     optionActive: 'border-teal-500 bg-teal-50/50 shadow-sm ring-1 ring-teal-400/20',
     optionInactive: 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 bg-white text-slate-700',
     optionCircleActive: 'bg-teal-600 text-white',
-    optionCircleInactive: 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
+    optionCircleInactive: 'bg-slate-100 text-slate-500 group-hover:bg-slate-200',
+    bg: 'bg-slate-50',
+    text: 'text-slate-800',
+    selection: 'selection:bg-teal-500/20 selection:text-teal-900',
+    headerBg: 'bg-white',
+    navStudentActive: 'bg-teal-600 text-white shadow-lg shadow-teal-600/10'
   },
   ocean: {
     textPrimary: 'text-blue-600',
@@ -69,7 +79,12 @@ export const themeMap: Record<AppTheme, ThemeClasses> = {
     optionActive: 'border-blue-500 bg-blue-50/50 shadow-sm ring-1 ring-blue-400/20',
     optionInactive: 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 bg-white text-slate-700',
     optionCircleActive: 'bg-blue-600 text-white',
-    optionCircleInactive: 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
+    optionCircleInactive: 'bg-slate-100 text-slate-500 group-hover:bg-slate-200',
+    bg: 'bg-slate-50',
+    text: 'text-slate-800',
+    selection: 'selection:bg-blue-500/20 selection:text-blue-900',
+    headerBg: 'bg-white',
+    navStudentActive: 'bg-blue-600 text-white shadow-lg shadow-blue-600/10'
   },
   sunset: {
     textPrimary: 'text-orange-600',
@@ -92,7 +107,12 @@ export const themeMap: Record<AppTheme, ThemeClasses> = {
     optionActive: 'border-orange-500 bg-amber-50/50 shadow-sm ring-1 ring-orange-400/20',
     optionInactive: 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 bg-white text-slate-700',
     optionCircleActive: 'bg-orange-600 text-white',
-    optionCircleInactive: 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
+    optionCircleInactive: 'bg-slate-100 text-slate-500 group-hover:bg-slate-200',
+    bg: 'bg-slate-50',
+    text: 'text-slate-800',
+    selection: 'selection:bg-orange-500/20 selection:text-orange-900',
+    headerBg: 'bg-white',
+    navStudentActive: 'bg-orange-600 text-white shadow-lg shadow-orange-600/10'
   },
   cosmic: {
     textPrimary: 'text-violet-400',
@@ -115,7 +135,12 @@ export const themeMap: Record<AppTheme, ThemeClasses> = {
     optionActive: 'border-violet-500 bg-violet-950/40 shadow-sm ring-1 ring-violet-500/30',
     optionInactive: 'border-slate-800 hover:border-slate-700 hover:bg-slate-800/50 bg-slate-900 text-slate-300',
     optionCircleActive: 'bg-violet-500 text-white',
-    optionCircleInactive: 'bg-slate-800 text-slate-400 group-hover:bg-slate-700'
+    optionCircleInactive: 'bg-slate-800 text-slate-400 group-hover:bg-slate-700',
+    bg: 'bg-slate-950',
+    text: 'text-slate-100',
+    selection: 'selection:bg-violet-500/30 selection:text-violet-200',
+    headerBg: 'bg-slate-900',
+    navStudentActive: 'bg-violet-600 text-white shadow-lg shadow-violet-600/20'
   },
   lavender: {
     textPrimary: 'text-purple-600',
@@ -138,6 +163,11 @@ export const themeMap: Record<AppTheme, ThemeClasses> = {
     optionActive: 'border-purple-500 bg-purple-50/50 shadow-sm ring-1 ring-purple-400/20',
     optionInactive: 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 bg-white text-slate-700',
     optionCircleActive: 'bg-purple-600 text-white',
-    optionCircleInactive: 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
+    optionCircleInactive: 'bg-slate-100 text-slate-500 group-hover:bg-slate-200',
+    bg: 'bg-slate-50',
+    text: 'text-slate-800',
+    selection: 'selection:bg-purple-500/20 selection:text-purple-900',
+    headerBg: 'bg-white',
+    navStudentActive: 'bg-purple-600 text-white shadow-lg shadow-purple-600/10'
   }
 };
