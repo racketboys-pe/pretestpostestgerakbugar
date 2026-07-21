@@ -18,6 +18,8 @@ export default function App() {
 
   // Submissions State
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   // Theme State
   const [theme, setTheme] = useState<AppTheme>('mint');
@@ -29,20 +31,95 @@ export default function App() {
     adminPass: 'admin123'
   });
 
+  const fetchSubmissions = async (urlToUse?: string) => {
+    const targetUrl = urlToUse || settings.googleSheetUrl;
+    if (!targetUrl) return;
+
+    setIsLoadingSubmissions(true);
+    setSyncError(null);
+    try {
+      const res = await fetch(targetUrl, {
+        method: 'GET'
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setSubmissions(data);
+        localStorage.setItem('pemahaman_konsep_submissions', JSON.stringify(data));
+      } else {
+        throw new Error("Format data dari Google Sheets tidak valid.");
+      }
+    } catch (err: any) {
+      console.error("Gagal sinkronisasi data Google Sheet:", err);
+      setSyncError("Gagal sinkronisasi data dari Google Sheet. Silakan periksa URL Web App atau koneksi internet Anda.");
+    } finally {
+      setIsLoadingSubmissions(false);
+    }
+  };
+
   // Load submissions, settings, and theme on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('pemahaman_konsep_theme') as AppTheme;
-    if (savedTheme && themeMap[savedTheme]) {
-      setTheme(savedTheme);
+    // 1. Parse parameters first
+    const params = new URLSearchParams(window.location.search);
+    const paramSheetUrl = params.get('sheetUrl');
+    const paramAdminId = params.get('adminId');
+    const paramAdminPass = params.get('adminPass');
+    const paramTheme = params.get('theme');
+
+    let loadedSettings = {
+      googleSheetUrl: '',
+      adminId: 'admin',
+      adminPass: 'admin123'
+    };
+
+    const savedSettings = localStorage.getItem('pemahaman_konsep_settings');
+    if (savedSettings) {
+      try {
+        loadedSettings = { ...loadedSettings, ...JSON.parse(savedSettings) };
+      } catch (e) {
+        console.error("Failed to parse settings", e);
+      }
     }
 
+    if (paramSheetUrl || paramAdminId || paramAdminPass) {
+      if (paramSheetUrl) loadedSettings.googleSheetUrl = paramSheetUrl;
+      if (paramAdminId) loadedSettings.adminId = paramAdminId;
+      if (paramAdminPass) loadedSettings.adminPass = paramAdminPass;
+      localStorage.setItem('pemahaman_konsep_settings', JSON.stringify(loadedSettings));
+    }
+    setSettings(loadedSettings);
+
+    let activeTheme: AppTheme = 'mint';
+    const savedTheme = localStorage.getItem('pemahaman_konsep_theme') as AppTheme;
+    if (savedTheme && themeMap[savedTheme]) {
+      activeTheme = savedTheme;
+    }
+    if (paramTheme && themeMap[paramTheme as AppTheme]) {
+      activeTheme = paramTheme as AppTheme;
+      localStorage.setItem('pemahaman_konsep_theme', paramTheme);
+    }
+    setTheme(activeTheme);
+
+    // Clean up URL query parameters silently
+    if (paramSheetUrl || paramAdminId || paramAdminPass || paramTheme) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Load submissions
+    let loadedSubmissions: Submission[] = [];
     const savedSubmissions = localStorage.getItem('pemahaman_konsep_submissions');
     if (savedSubmissions) {
       try {
-        setSubmissions(JSON.parse(savedSubmissions));
+        loadedSubmissions = JSON.parse(savedSubmissions);
       } catch (e) {
         console.error("Failed to parse submissions", e);
       }
+    }
+
+    if (loadedSubmissions.length > 0) {
+      setSubmissions(loadedSubmissions);
     } else {
       // Seed initial dummy/simulation data to give a perfect immediate preview!
       const initialSeed: Submission[] = [
@@ -111,13 +188,9 @@ export default function App() {
       localStorage.setItem('pemahaman_konsep_submissions', JSON.stringify(initialSeed));
     }
 
-    const savedSettings = localStorage.getItem('pemahaman_konsep_settings');
-    if (savedSettings) {
-      try {
-        setSettings(JSON.parse(savedSettings));
-      } catch (e) {
-        console.error("Failed to parse settings", e);
-      }
+    // Trigger initial fetch from Google Sheets if URL is available
+    if (loadedSettings.googleSheetUrl) {
+      fetchSubmissions(loadedSettings.googleSheetUrl);
     }
   }, []);
 
@@ -132,6 +205,9 @@ export default function App() {
   const handleSaveSettings = (newSettings: AdminSettings) => {
     setSettings(newSettings);
     localStorage.setItem('pemahaman_konsep_settings', JSON.stringify(newSettings));
+    if (newSettings.googleSheetUrl) {
+      fetchSubmissions(newSettings.googleSheetUrl);
+    }
   };
 
   // Clear all submissions
@@ -152,7 +228,7 @@ export default function App() {
   return (
     <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text} font-sans flex flex-col ${currentTheme.selection}`} id="main-app-container">
       {/* Upper Navigation Bar */}
-      <header className={`${currentTheme.headerBg} border-b ${currentTheme.border} sticky top-0 z-50 shadow-sm transition-colors duration-300`} id="main-header">
+      <header className={`${currentTheme.darkCanvas ? 'bg-slate-900' : 'bg-white'} border-b ${currentTheme.border} sticky top-0 z-50 shadow-sm transition-colors duration-300`} style={{ backgroundColor: currentTheme.darkCanvas ? '#0f172a' : '#ffffff' }} id="main-header">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Logo Brand */}
@@ -267,6 +343,9 @@ export default function App() {
                 onClearSubmissions={handleClearSubmissions}
                 onDeleteSubmission={handleDeleteSubmission}
                 theme={theme}
+                onRefreshSubmissions={() => fetchSubmissions()}
+                isLoadingSubmissions={isLoadingSubmissions}
+                syncError={syncError}
               />
             </motion.div>
           )}

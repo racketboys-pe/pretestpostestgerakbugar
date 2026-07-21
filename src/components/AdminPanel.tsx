@@ -32,6 +32,9 @@ interface AdminPanelProps {
   onClearSubmissions: () => void;
   onDeleteSubmission: (id: string) => void;
   theme: AppTheme;
+  onRefreshSubmissions?: () => void;
+  isLoadingSubmissions?: boolean;
+  syncError?: string | null;
 }
 
 export default function AdminPanel({
@@ -40,7 +43,10 @@ export default function AdminPanel({
   onSaveSettings,
   onClearSubmissions,
   onDeleteSubmission,
-  theme
+  theme,
+  onRefreshSubmissions,
+  isLoadingSubmissions = false,
+  syncError = null
 }: AdminPanelProps) {
   // Login State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -69,6 +75,7 @@ export default function AdminPanel({
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
   const [securitySuccessMsg, setSecuritySuccessMsg] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
 
   // Handle Login
   const handleLogin = (e: React.FormEvent) => {
@@ -122,7 +129,50 @@ export default function AdminPanel({
 
   // Copy Google Apps Script to clipboard
   const handleCopyScript = () => {
-    const scriptText = `function doPost(e) {
+    const scriptText = `function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var rows = sheet.getDataRange().getValues();
+  var data = [];
+  
+  if (rows.length > 1) {
+    var headers = rows[0];
+    for (var i = 1; i < rows.length; i++) {
+      var row = rows[i];
+      var answers = {};
+      
+      // Ambil jawaban Soal 1 - 25
+      for (var s = 1; s <= 25; s++) {
+        var colIndex = 8 + s - 1; // Kolom 9 adalah Soal 1 (index 8)
+        if (colIndex < row.length) {
+          answers[s] = row[colIndex] || "";
+        }
+      }
+      
+      var submission = {
+        id: "sheet_" + i + "_" + (row[0] ? new Date(row[0]).getTime() : i),
+        timestamp: row[0] ? String(row[0]) : "",
+        nama: row[1] ? String(row[1]) : "",
+        kelas: row[2] ? String(row[2]) : "",
+        sekolah: row[3] ? String(row[3]) : "",
+        tipeTes: row[4] ? String(row[4]) : "Pretest",
+        correctCount: Number(row[5]) || 0,
+        totalQuestions: Number(row[6]) || 0,
+        score: Number(row[7]) || 0,
+        answers: answers
+      };
+      
+      data.push(submission);
+    }
+  }
+  
+  // Balik data agar urutan terbaru ada di atas (agar pas di visualisasi)
+  data.reverse();
+  
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var data = JSON.parse(e.postData.contents);
   
@@ -1122,6 +1172,79 @@ export default function AdminPanel({
                 </button>
               </div>
             </form>
+
+            {/* Sync and Share Section */}
+            {settings.googleSheetUrl && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-5 border-t border-slate-150" id="sync-share-section">
+                {/* 1. Sync Control */}
+                <div className="bg-slate-50/50 rounded-2xl p-5 border border-slate-200/60 flex flex-col justify-between" id="sync-panel">
+                  <div className="space-y-2">
+                    <h4 className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
+                      <RefreshCw className={`w-4 h-4 text-teal-600 ${isLoadingSubmissions ? 'animate-spin' : ''}`} />
+                      Sinkronkan Data Manual
+                    </h4>
+                    <p className="text-slate-500 text-[11px] leading-relaxed">
+                      Ambil data hasil pengerjaan siswa terbaru yang ada di Google Sheets Anda secara real-time ke aplikasi ini.
+                    </p>
+                    
+                    {syncError && (
+                      <div className="p-3 bg-red-50 text-red-700 border border-red-100 rounded-xl text-[10px] font-semibold flex items-center gap-1.5 mt-2">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{syncError}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-4">
+                    <button
+                      type="button"
+                      onClick={onRefreshSubmissions}
+                      disabled={isLoadingSubmissions}
+                      className="w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all disabled:opacity-55"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isLoadingSubmissions ? 'animate-spin' : ''}`} />
+                      {isLoadingSubmissions ? 'Sedang Menyinkronkan...' : 'Sinkronkan Sekarang'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Share / Multi-Device Access */}
+                <div className="bg-slate-50/50 rounded-2xl p-5 border border-slate-200/60 flex flex-col justify-between" id="share-panel">
+                  <div className="space-y-2">
+                    <h4 className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
+                      <Users className="w-4 h-4 text-teal-600" />
+                      Akses Multi-Device (Sinkronisasi HP/Laptop)
+                    </h4>
+                    <p className="text-slate-500 text-[11px] leading-relaxed">
+                      Bagikan atau buka link ini di perangkat lain (laptop lain, HP, atau komputer sekolah) agar data & pengaturan Google Sheet ini otomatis tersambung di sana.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 pt-4">
+                    <div className="flex gap-1.5">
+                      <input
+                        type="text"
+                        readOnly
+                        value={`${window.location.origin}${window.location.pathname}?sheetUrl=${encodeURIComponent(settings.googleSheetUrl)}&adminId=${encodeURIComponent(settings.adminId)}&adminPass=${encodeURIComponent(settings.adminPass)}&theme=${theme}`}
+                        className="flex-grow px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[9px] font-mono text-slate-500 select-all focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = `${window.location.origin}${window.location.pathname}?sheetUrl=${encodeURIComponent(settings.googleSheetUrl)}&adminId=${encodeURIComponent(settings.adminId)}&adminPass=${encodeURIComponent(settings.adminPass)}&theme=${theme}`;
+                          navigator.clipboard.writeText(url);
+                          setIsLinkCopied(true);
+                          setTimeout(() => setIsLinkCopied(false), 3000);
+                        }}
+                        className="px-3 py-1.5 bg-slate-850 hover:bg-slate-700 text-white font-bold rounded-lg text-[10px] whitespace-nowrap transition-all"
+                      >
+                        {isLinkCopied ? 'Tersalin!' : 'Salin Link'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Instruction Guide */}
             <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200/60 space-y-5">
