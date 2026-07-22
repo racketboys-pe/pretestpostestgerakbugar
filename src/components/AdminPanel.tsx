@@ -25,6 +25,160 @@ import {
 import { Submission, AdminSettings, AppTheme } from '../types';
 import { questions } from '../questions';
 
+const GOOGLE_APPS_SCRIPT_CODE = `function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+  // Jika ada parameter data atau nama (berarti pengiriman kuis via GET)
+  if (e && (e.parameter.action === "submit" || e.parameter.nama || e.parameter.data)) {
+    var data = {};
+    if (e.parameter.data) {
+      try {
+        data = JSON.parse(e.parameter.data);
+      } catch(err) {
+        data = e.parameter;
+      }
+    } else {
+      data = e.parameter;
+    }
+    return handleDataSubmission(sheet, data);
+  }
+  
+  // Default: Ambil seluruh data kuis untuk sinkronisasi di aplikasi Guru (GET tanpa parameter submit)
+  var rows = sheet.getDataRange().getValues();
+  var dataList = [];
+  
+  if (rows.length > 1) {
+    for (var i = 1; i < rows.length; i++) {
+      var row = rows[i];
+      var answers = {};
+      
+      // Ambil jawaban Soal 1 - 25 (mulai dari kolom ke-9 / indeks 8)
+      for (var s = 1; s <= 25; s++) {
+        var colIndex = 8 + s - 1; 
+        if (colIndex < row.length) {
+          answers[s] = row[colIndex] || "";
+        }
+      }
+      
+      var submission = {
+        id: "sheet_" + i + "_" + (row[0] ? new Date(row[0]).getTime() : i),
+        timestamp: row[0] ? String(row[0]) : "",
+        nama: row[1] ? String(row[1]) : "",
+        kelas: row[2] ? String(row[2]) : "",
+        sekolah: row[3] ? String(row[3]) : "",
+        tipeTes: row[4] ? String(row[4]) : "Pretest",
+        correctCount: Number(row[5]) || 0,
+        totalQuestions: Number(row[6]) || 0,
+        score: Number(row[7]) || 0,
+        answers: answers
+      };
+      
+      dataList.push(submission);
+    }
+  }
+  
+  // Urutkan data terbaru di paling atas
+  dataList.reverse();
+  
+  return ContentService.createTextOutput(JSON.stringify(dataList))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  return handleDataSubmission(sheet, data);
+}
+
+function handleDataSubmission(sheet, data) {
+  // Jika spreadsheet masih kosong, buatkan baris header otomatis
+  if (sheet.getLastRow() === 0) {
+    var headers = ["Timestamp", "Nama", "Kelas", "Sekolah", "Tipe Tes", "Jumlah Benar", "Total Soal", "Nilai"];
+    for (var i = 1; i <= 25; i++) {
+      headers.push("Soal " + i);
+    }
+    sheet.appendRow(headers);
+    
+    // Memberikan gaya visual header yang rapi
+    var headerRange = sheet.getRange(1, 1, 1, headers.length);
+    headerRange.setBackground("#0D9488"); // Warna Teal yang elegan
+    headerRange.setFontColor("#FFFFFF");
+    headerRange.setFontWeight("bold");
+    headerRange.setHorizontalAlignment("center");
+    headerRange.setVerticalAlignment("middle");
+    sheet.setRowHeight(1, 28);
+  }
+  
+  var row = [
+    data.timestamp || new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }),
+    data.nama || "",
+    data.kelas || "",
+    data.sekolah || "",
+    data.tipeTes || "Pretest",
+    Number(data.correctCount) || 0,
+    Number(data.totalQuestions) || 25,
+    Number(data.score) || 0
+  ];
+  
+  // Ambil jawaban kuis Soal 1 sampai 25
+  for (var i = 1; i <= 25; i++) {
+    row.push(data["Q" + i] || "");
+  }
+  
+  sheet.appendRow(row);
+  
+  var lastRow = sheet.getLastRow();
+  sheet.setRowHeight(lastRow, 22);
+  
+  // Format warna otomatis kolom jawaban Soal 1 s.d 25 (Kolom 9 sampai 33)
+  for (var i = 1; i <= 25; i++) {
+    var colIndex = 8 + i; 
+    var cell = sheet.getRange(lastRow, colIndex);
+    var answer = data["Q" + i];
+    var isCorrect = data["Q" + i + "_isCorrect"];
+    
+    if (answer !== undefined && answer !== "") {
+      if (isCorrect === true || isCorrect === "true" || isCorrect === 1) {
+        cell.setBackground("#D4EDDA"); // Hijau untuk jawaban benar
+        cell.setFontColor("#155724");
+      } else {
+        cell.setBackground("#F8D7DA"); // Merah untuk jawaban salah
+        cell.setFontColor("#721C24");
+      }
+    } else {
+      cell.setBackground("#E2E8F0"); // Abu-abu jika tidak diisi
+    }
+    cell.setHorizontalAlignment("center");
+  }
+  
+  // Mengatur text alignment kolom pendukung
+  sheet.getRange(lastRow, 1).setHorizontalAlignment("center");
+  sheet.getRange(lastRow, 3).setHorizontalAlignment("center");
+  sheet.getRange(lastRow, 5).setHorizontalAlignment("center");
+  sheet.getRange(lastRow, 6).setHorizontalAlignment("center");
+  sheet.getRange(lastRow, 7).setHorizontalAlignment("center");
+  
+  // Atur warna kolom Nilai secara dinamis
+  var scoreCell = sheet.getRange(lastRow, 8);
+  scoreCell.setHorizontalAlignment("center");
+  scoreCell.setFontWeight("bold");
+  var score = Number(data.score) || 0;
+  
+  if (score >= 80) {
+    scoreCell.setBackground("#D1E7DD");
+    scoreCell.setFontColor("#0F5132");
+  } else if (score >= 60) {
+    scoreCell.setBackground("#FFF3CD");
+    scoreCell.setFontColor("#664D03");
+  } else {
+    scoreCell.setBackground("#F8D7DA");
+    scoreCell.setFontColor("#842029");
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({ "status": "success", "message": "Data berhasil disimpan!" }))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
 interface AdminPanelProps {
   settings: AdminSettings;
   submissions: Submission[];
@@ -129,142 +283,7 @@ export default function AdminPanel({
 
   // Copy Google Apps Script to clipboard
   const handleCopyScript = () => {
-    const scriptText = `function doGet(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var rows = sheet.getDataRange().getValues();
-  var data = [];
-  
-  if (rows.length > 1) {
-    var headers = rows[0];
-    for (var i = 1; i < rows.length; i++) {
-      var row = rows[i];
-      var answers = {};
-      
-      // Ambil jawaban Soal 1 - 25
-      for (var s = 1; s <= 25; s++) {
-        var colIndex = 8 + s - 1; // Kolom 9 adalah Soal 1 (index 8)
-        if (colIndex < row.length) {
-          answers[s] = row[colIndex] || "";
-        }
-      }
-      
-      var submission = {
-        id: "sheet_" + i + "_" + (row[0] ? new Date(row[0]).getTime() : i),
-        timestamp: row[0] ? String(row[0]) : "",
-        nama: row[1] ? String(row[1]) : "",
-        kelas: row[2] ? String(row[2]) : "",
-        sekolah: row[3] ? String(row[3]) : "",
-        tipeTes: row[4] ? String(row[4]) : "Pretest",
-        correctCount: Number(row[5]) || 0,
-        totalQuestions: Number(row[6]) || 0,
-        score: Number(row[7]) || 0,
-        answers: answers
-      };
-      
-      data.push(submission);
-    }
-  }
-  
-  // Balik data agar urutan terbaru ada di atas (agar pas di visualisasi)
-  data.reverse();
-  
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = JSON.parse(e.postData.contents);
-  
-  // Jika spreadsheet kosong, buatkan header kolom otomatis dengan gaya visual profesional
-  if (sheet.getLastRow() === 0) {
-    var headers = ["Timestamp", "Nama", "Kelas", "Sekolah", "Tipe Tes", "Jumlah Benar", "Total Soal", "Nilai"];
-    for (var i = 1; i <= 25; i++) {
-      headers.push("Soal " + i);
-    }
-    sheet.appendRow(headers);
-    
-    // Memberi gaya pada header agar tampak rapi dan profesional
-    var headerRange = sheet.getRange(1, 1, 1, headers.length);
-    headerRange.setBackground("#4F46E5"); // Indigo background
-    headerRange.setFontColor("#FFFFFF");
-    headerRange.setFontWeight("bold");
-    headerRange.setHorizontalAlignment("center");
-    headerRange.setVerticalAlignment("middle");
-    sheet.setRowHeight(1, 28);
-  }
-  
-  // Urutkan data baris sesuai dengan urutan kolom header
-  var row = [
-    data.timestamp,
-    data.nama,
-    data.kelas,
-    data.sekolah,
-    data.tipeTes,
-    data.correctCount,
-    data.totalQuestions,
-    data.score
-  ];
-  
-  // Tambahkan jawaban kuis (Soal 1 - 25)
-  for (var i = 1; i <= 25; i++) {
-    row.push(data["Q" + i] || "");
-  }
-  
-  sheet.appendRow(row);
-  
-  // Ambil baris terakhir yang baru saja ditambahkan untuk diwarnai selnya
-  var lastRow = sheet.getLastRow();
-  sheet.setRowHeight(lastRow, 22);
-  
-  // Berikan warna latar belakang pada sel jawaban Soal 1 sampai Soal 25 (Kolom 9 sampai 33)
-  for (var i = 1; i <= 25; i++) {
-    var colIndex = 8 + i; // Soal 1 berada di kolom 9
-    var cell = sheet.getRange(lastRow, colIndex);
-    var answer = data["Q" + i];
-    var isCorrect = data["Q" + i + "_isCorrect"];
-    
-    if (answer) {
-      if (isCorrect === true || isCorrect === "true") {
-        cell.setBackground("#D4EDDA"); // Hijau muda untuk Benar
-        cell.setFontColor("#155724");
-      } else {
-        cell.setBackground("#F8D7DA"); // Merah muda untuk Salah
-        cell.setFontColor("#721C24");
-      }
-    } else {
-      cell.setBackground("#E2E8F0"); // Abu-abu jika kosong
-    }
-    cell.setHorizontalAlignment("center");
-  }
-  
-  // Atur perataan tengah untuk kolom-kolom identitas dan statistik
-  sheet.getRange(lastRow, 1).setHorizontalAlignment("center"); // Timestamp
-  sheet.getRange(lastRow, 3).setHorizontalAlignment("center"); // Kelas
-  sheet.getRange(lastRow, 5).setHorizontalAlignment("center"); // Tipe Tes
-  sheet.getRange(lastRow, 6).setHorizontalAlignment("center"); // Jumlah Benar
-  sheet.getRange(lastRow, 7).setHorizontalAlignment("center"); // Total Soal
-  
-  // Pewarnaan khusus kolom Nilai (Kolom 8) berdasarkan skor pengerjaan
-  var scoreCell = sheet.getRange(lastRow, 8);
-  scoreCell.setHorizontalAlignment("center");
-  scoreCell.setFontWeight("bold");
-  var score = Number(data.score);
-  if (score >= 80) {
-    scoreCell.setBackground("#D1E7DD"); // Hijau cerah untuk nilai bagus
-    scoreCell.setFontColor("#0F5132");
-  } else if (score >= 60) {
-    scoreCell.setBackground("#FFF3CD"); // Kuning untuk nilai cukup
-    scoreCell.setFontColor("#664D03");
-  } else {
-    scoreCell.setBackground("#F8D7DA"); // Merah cerah untuk nilai kurang
-    scoreCell.setFontColor("#842029");
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({ "status": "success", "message": "Data berhasil disimpan dan diformat warna" }))
-    .setMimeType(ContentService.MimeType.JSON);
-}`;
-    navigator.clipboard.writeText(scriptText);
+    navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_CODE);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 3000);
   };
@@ -1279,98 +1298,7 @@ function doPost(e) {
                       {isCopied ? 'Tersalin' : 'Salin Kode'}
                     </button>
                     <pre className="mt-2 text-emerald-400 leading-normal">
-{`function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = JSON.parse(e.postData.contents);
-  
-  // Jika spreadsheet kosong, buatkan header kolom otomatis dengan gaya visual profesional
-  if (sheet.getLastRow() === 0) {
-    var headers = ["Timestamp", "Nama", "Kelas", "Sekolah", "Tipe Tes", "Jumlah Benar", "Total Soal", "Nilai"];
-    for (var i = 1; i <= 25; i++) {
-      headers.push("Soal " + i);
-    }
-    sheet.appendRow(headers);
-    
-    // Memberi gaya pada header agar tampak rapi dan profesional
-    var headerRange = sheet.getRange(1, 1, 1, headers.length);
-    headerRange.setBackground("#4F46E5"); // Indigo background
-    headerRange.setFontColor("#FFFFFF");
-    headerRange.setFontWeight("bold");
-    headerRange.setHorizontalAlignment("center");
-    headerRange.setVerticalAlignment("middle");
-    sheet.setRowHeight(1, 28);
-  }
-  
-  // Urutkan data baris sesuai dengan urutan kolom header
-  var row = [
-    data.timestamp,
-    data.nama,
-    data.kelas,
-    data.sekolah,
-    data.tipeTes,
-    data.correctCount,
-    data.totalQuestions,
-    data.score
-  ];
-  
-  // Tambahkan jawaban kuis (Soal 1 - 25)
-  for (var i = 1; i <= 25; i++) {
-    row.push(data["Q" + i] || "");
-  }
-  
-  sheet.appendRow(row);
-  
-  // Ambil baris terakhir yang baru saja ditambahkan untuk diwarnai selnya
-  var lastRow = sheet.getLastRow();
-  sheet.setRowHeight(lastRow, 22);
-  
-  // Berikan warna latar belakang pada sel jawaban Soal 1 sampai Soal 25 (Kolom 9 sampai 33)
-  for (var i = 1; i <= 25; i++) {
-    var colIndex = 8 + i; // Soal 1 berada di kolom 9
-    var cell = sheet.getRange(lastRow, colIndex);
-    var answer = data["Q" + i];
-    var isCorrect = data["Q" + i + "_isCorrect"];
-    
-    if (answer) {
-      if (isCorrect === true || isCorrect === "true") {
-        cell.setBackground("#D4EDDA"); // Hijau muda untuk Benar
-        cell.setFontColor("#155724");
-      } else {
-        cell.setBackground("#F8D7DA"); // Merah muda untuk Salah
-        cell.setFontColor("#721C24");
-      }
-    } else {
-      cell.setBackground("#E2E8F0"); // Abu-abu jika kosong
-    }
-    cell.setHorizontalAlignment("center");
-  }
-  
-  // Atur perataan tengah untuk kolom-kolom identitas dan statistik
-  sheet.getRange(lastRow, 1).setHorizontalAlignment("center"); // Timestamp
-  sheet.getRange(lastRow, 3).setHorizontalAlignment("center"); // Kelas
-  sheet.getRange(lastRow, 5).setHorizontalAlignment("center"); // Tipe Tes
-  sheet.getRange(lastRow, 6).setHorizontalAlignment("center"); // Jumlah Benar
-  sheet.getRange(lastRow, 7).setHorizontalAlignment("center"); // Total Soal
-  
-  // Pewarnaan khusus kolom Nilai (Kolom 8) berdasarkan skor pengerjaan
-  var scoreCell = sheet.getRange(lastRow, 8);
-  scoreCell.setHorizontalAlignment("center");
-  scoreCell.setFontWeight("bold");
-  var score = Number(data.score);
-  if (score >= 80) {
-    scoreCell.setBackground("#D1E7DD"); // Hijau cerah untuk nilai bagus
-    scoreCell.setFontColor("#0F5132");
-  } else if (score >= 60) {
-    scoreCell.setBackground("#FFF3CD"); // Kuning untuk nilai cukup
-    scoreCell.setFontColor("#664D03");
-  } else {
-    scoreCell.setBackground("#F8D7DA"); // Merah cerah untuk nilai kurang
-    scoreCell.setFontColor("#842029");
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({ "status": "success", "message": "Data berhasil disimpan dan diformat warna" }))
-    .setMimeType(ContentService.MimeType.JSON);
-}`}
+{GOOGLE_APPS_SCRIPT_CODE}
                     </pre>
                   </div>
                 </div>

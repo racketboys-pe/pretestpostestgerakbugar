@@ -11,6 +11,7 @@ import StudentQuiz from './components/StudentQuiz';
 import AdminPanel from './components/AdminPanel';
 import { Submission, AdminSettings, AppTheme } from './types';
 import { themeMap } from './lib/theme';
+import { GLOBAL_CONFIG } from './config';
 
 export default function App() {
   // Navigation: 'student' | 'admin'
@@ -22,13 +23,13 @@ export default function App() {
   const [syncError, setSyncError] = useState<string | null>(null);
 
   // Theme State
-  const [theme, setTheme] = useState<AppTheme>('mint');
+  const [theme, setTheme] = useState<AppTheme>(GLOBAL_CONFIG.defaultTheme || 'mint');
 
   // Admin Config State
   const [settings, setSettings] = useState<AdminSettings>({
-    googleSheetUrl: '',
-    adminId: 'admin',
-    adminPass: 'admin123'
+    googleSheetUrl: GLOBAL_CONFIG.defaultGoogleSheetUrl || '',
+    adminId: GLOBAL_CONFIG.defaultAdminId || 'admin',
+    adminPass: GLOBAL_CONFIG.defaultAdminPass || 'admin123'
   });
 
   const fetchSubmissions = async (urlToUse?: string) => {
@@ -69,15 +70,18 @@ export default function App() {
     const paramTheme = params.get('theme');
 
     let loadedSettings = {
-      googleSheetUrl: '',
-      adminId: 'admin',
-      adminPass: 'admin123'
+      googleSheetUrl: GLOBAL_CONFIG.defaultGoogleSheetUrl || '',
+      adminId: GLOBAL_CONFIG.defaultAdminId || 'admin',
+      adminPass: GLOBAL_CONFIG.defaultAdminPass || 'admin123'
     };
 
     const savedSettings = localStorage.getItem('pemahaman_konsep_settings');
     if (savedSettings) {
       try {
-        loadedSettings = { ...loadedSettings, ...JSON.parse(savedSettings) };
+        const parsed = JSON.parse(savedSettings);
+        if (parsed.googleSheetUrl) loadedSettings.googleSheetUrl = parsed.googleSheetUrl;
+        if (parsed.adminId) loadedSettings.adminId = parsed.adminId;
+        if (parsed.adminPass) loadedSettings.adminPass = parsed.adminPass;
       } catch (e) {
         console.error("Failed to parse settings", e);
       }
@@ -91,7 +95,7 @@ export default function App() {
     }
     setSettings(loadedSettings);
 
-    let activeTheme: AppTheme = 'mint';
+    let activeTheme: AppTheme = GLOBAL_CONFIG.defaultTheme || 'mint';
     const savedTheme = localStorage.getItem('pemahaman_konsep_theme') as AppTheme;
     if (savedTheme && themeMap[savedTheme]) {
       activeTheme = savedTheme;
